@@ -19,12 +19,92 @@
  */
 
 #include "utility.h"
+#include "sfdroid_defs.h"
 
 #include <fstream>
+#include <string>
 #include <unistd.h>
 #include <cstring>
 
 using namespace std;
+
+// these should stay in the same window
+bool is_blacklisted(string app)
+{
+    if(app.find("BootAnimation") == 0)
+    {
+        return false;
+    }
+
+    if(app.find(".") == std::string::npos)
+    {
+        return true;
+    }
+
+    if(app.find("android/com.android.internal.app.ResolverActivity") != std::string::npos)
+    {
+        return true;
+    }
+
+    if(app.find("com.android.phone") != std::string::npos)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+string get_app_name(char *layer_name)
+{
+    std::string app = layer_name;
+    std::string::size_type idx = app.find("SurfaceView ");
+
+    if(app == "BootAnimation")
+    {
+        return "com.android.systemui";
+    }
+
+    if(app.find("Android is starting") != std::string::npos)
+    {
+        return "com.android.systemui";
+    }
+
+    if(idx != std::string::npos)
+    {
+        app = app.substr(idx + 12);
+    }
+
+    idx = app.find("Starting ");
+    if(idx != std::string::npos)
+    {
+        app = app.substr(idx + 9);
+    }
+
+    if(app == "")
+    {
+        app = layer_name;
+    }
+
+    idx = app.find(" ");
+
+    if(idx != std::string::npos)
+    {
+        app = app.substr(0, idx);
+    }
+
+    if(app == "com.android.phasebeam.PhaseBeamWallpaper" || app.find("com.cyanogenmod.trebuchet") != std::string::npos)
+    {
+        app = "com.android.systemui";
+    }
+
+    idx = app.find("/");
+    if(idx != std::string::npos)
+    {
+        app = app.substr(0, idx);
+    }
+
+    return app;
+}
 
 void touch(const char *fname)
 {
@@ -35,6 +115,29 @@ void touch(const char *fname)
 void wakeup_android()
 {
     system("/usr/bin/sfdroid_powerup &");
+}
+
+void to_front(const char *app)
+{
+    char buff[5120];
+    touch(AM_START_STILL_RUNNING_FILE);
+    if(strcmp(app, "com.android.systemui") != 0)
+    {
+        snprintf(buff, 5120, "(/usr/bin/am previous --user 0 -p %s; rm %s) &", app, AM_START_STILL_RUNNING_FILE);
+    }
+    else
+    {
+        snprintf(buff, 5120, "(/usr/bin/am previous --user 0 -p com.cyanogenmod.trebuchet; rm %s) &", AM_START_STILL_RUNNING_FILE);
+    }
+    system(buff);
+}
+
+bool to_front_still_processing()
+{
+    fstream f;
+    f.open(AM_START_STILL_RUNNING_FILE, ios::in);
+    if(f.is_open()) return true;
+    return false;
 }
 
 void start_app(const char *appandactivity)

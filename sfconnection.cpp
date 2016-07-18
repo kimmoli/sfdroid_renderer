@@ -19,12 +19,11 @@
  */
 
 #include <iostream>
+#include <chrono>
 
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
-
-#include <SDL.h>
 
 #include "sfconnection.h"
 #include "utility.h"
@@ -33,7 +32,7 @@ using namespace std;
 
 gralloc_module_t *gralloc_module(nullptr);
 
-int sfconnection_t::init(uint32_t the_sdl_event)
+int sfconnection_t::init()
 {
     int err = 0;
     struct sockaddr_un addr;
@@ -81,8 +80,6 @@ int sfconnection_t::init(uint32_t the_sdl_event)
 
     chmod(SHAREBUFFER_HANDLE_FILE, 0770);
 
-    sdl_event = the_sdl_event;
-
 quit:
     return err;
 }
@@ -91,7 +88,7 @@ void dummy_f(android_native_base_t *base)
 {
 }
 
-int sfconnection_t::wait_for_buffer(int &timedout)
+int sfconnection_t::wait_for_buffer(int &timedout, bool &is_not_a_buffer)
 {
     int err = 0;
     int r;
@@ -120,7 +117,7 @@ int sfconnection_t::wait_for_buffer(int &timedout)
         goto quit;
     }
 
-    if(buf[0] != 0xFF)
+    if(buf[0] != 0xFF && buf[0] != 0xFE && buf[0] != 0xFD)
     {
 #if DEBUG
         cout << "received post notification" << endl;
@@ -140,6 +137,104 @@ int sfconnection_t::wait_for_buffer(int &timedout)
         goto quit;
     }
 
+    if(buf[0] == 0xFD)
+    {
+#if DEBUG
+        cout << "received close event" << endl;
+#endif
+        sfdroid_event event;
+
+        r = recv(fd_client, buf, 1, 0);
+        if(r < 0)
+        {
+            if(errno == ETIMEDOUT || errno == EAGAIN || errno == EINTR)
+            {
+                timedout = 1;
+                err = 0;
+                goto quit;
+            }
+
+            cerr << "lost client " << strerror(errno) << endl;
+            err = 1;
+            goto quit;
+        }
+
+        r = recv(fd_client, event.data.layer_name, buf[0], 0);
+        if(r < 0)
+        {
+            if(errno == ETIMEDOUT || errno == EAGAIN || errno == EINTR)
+            {
+                timedout = 1;
+                err = 0;
+                goto quit;
+            }
+
+            cerr << "lost client " << strerror(errno) << endl;
+            err = 1;
+            goto quit;
+        }
+
+        event.data.layer_name[(unsigned int)buf[0]] = 0;
+
+        event.type = LAYER_CLOSE;
+        sfdroid_events_mutex.lock();
+        sfdroid_events.push_back(event);
+        sfdroid_events_mutex.unlock();
+
+        is_not_a_buffer = true;
+        err = 0;
+        goto quit;
+    }
+
+    if(buf[0] == 0xFE)
+    {
+#if DEBUG
+        cout << "received layer name" << endl;
+#endif
+        sfdroid_event event;
+
+        r = recv(fd_client, buf, 1, 0);
+        if(r < 0)
+        {
+            if(errno == ETIMEDOUT || errno == EAGAIN || errno == EINTR)
+            {
+                timedout = 1;
+                err = 0;
+                goto quit;
+            }
+
+            cerr << "lost client " << strerror(errno) << endl;
+            err = 1;
+            goto quit;
+        }
+
+        r = recv(fd_client, event.data.layer_name, buf[0], 0);
+        if(r < 0)
+        {
+            if(errno == ETIMEDOUT || errno == EAGAIN || errno == EINTR)
+            {
+                timedout = 1;
+                err = 0;
+                goto quit;
+            }
+
+            cerr << "lost client " << strerror(errno) << endl;
+            err = 1;
+            goto quit;
+        }
+
+        event.data.layer_name[(unsigned int)buf[0]] = 0;
+
+        event.type = LAYER_NAME;
+        sfdroid_events_mutex.lock();
+        sfdroid_events.push_back(event);
+        sfdroid_events_mutex.unlock();
+
+        is_not_a_buffer = true;
+        err = 0;
+        goto quit;
+    }
+
     buffer = new ANativeWindowBuffer();
 
 #if DEBUG
@@ -155,7 +250,7 @@ int sfconnection_t::wait_for_buffer(int &timedout)
             goto quit;
         }
 
-        cerr << "lost client" << endl;
+        cerr << "lost client " << strerror(errno) << endl;
         err = 1;
         goto quit;
     }
@@ -185,13 +280,17 @@ int sfconnection_t::wait_for_buffer(int &timedout)
     cout << "buffer info:" << endl;
     cout << "width: " << current_info.width << " height: " << current_info.height << " stride: " << current_info.stride << " pixel_format: " << current_info.pixel_format << endl;
 #endif
-    quit:
+
+    is_not_a_buffer = false;
+
+quit:
     if(err != 0)
     {
         if(registered)
         {
             gralloc_module->unregisterBuffer(gralloc_module, handle);
         }
+        // does this also make sense if layer name or layer close failed?
         close(fd_client);
         fd_client = -1;
         remove_buffers();
@@ -278,7 +377,7 @@ void sfconnection_t::update_timeout()
     struct timeval timeout;
     memset(&timeout, 0, sizeof(timeout));
 
-    if(have_focus)
+    if(my_have_focus)
     {
         timeout.tv_usec = SHAREBUFFER_SOCKET_TIMEOUT_US;
     }
@@ -322,58 +421,61 @@ void sfconnection_t::thread_loop()
         if(have_client())
         {
             int timedout = 0;
-            if(wait_for_buffer(timedout) == 0)
+            bool is_not_a_buffer = false;
+            if(wait_for_buffer(timedout, is_not_a_buffer) == 0)
             {
-                buffer_done = false;
-
-                if(!timedout)
+                back_cond.notify_one();
+                if(!is_not_a_buffer)
                 {
-                    // tell the renderer to draw the buffer
-                    SDL_Event event;
-                    SDL_memset(&event, 0, sizeof(event));
-                    event.type = sdl_event;
-                    event.user.code = BUFFER;
-                    SDL_PushEvent(&event);
-
-                    while(!buffer_done)
+                    if(!timedout)
                     {
-                        usleep(1666);
-                        std::this_thread::yield();
-                        if(!running) break;
-                    }
+                        sfdroid_event event;
+                        event.type = BUFFER;
+                        event.data.buffer.buffer = current_buffer;
+                        event.data.buffer.info = &current_info;
+                        sfdroid_events_mutex.lock();
+                        sfdroid_events.push_back(event);
+                        sfdroid_events_mutex.unlock();
 
-                    // let sharebuffer know were done
-                    send_status_and_cleanup();
+                        unique_lock<mutex> lock(notify_mutex);
 
-                    timeout_count = 0;
-                }
-                else
-                {
-                    if(((timeout_count + 1) * SHAREBUFFER_SOCKET_TIMEOUT_US) / 1000 >= DUMMY_RENDER_TIMEOUT_MS)
-                    {
-                        SDL_Event event;
-                        SDL_memset(&event, 0, sizeof(event));
-                        event.type = sdl_event;
-                        event.user.code = NO_BUFFER;
-                        SDL_PushEvent(&event);
+                        buffer_cond.wait(lock);
 
-                        while(!buffer_done)
-                        {
-                            usleep(1666);
-                            std::this_thread::yield();
-                            if(!running) break;
-                        }
+                        // let sharebuffer know were done
+                        send_status_and_cleanup();
 
                         timeout_count = 0;
                     }
-                    else timeout_count++;
-
-                    if(have_focus)
+                    else
                     {
+                        if(((timeout_count + 1) * SHAREBUFFER_SOCKET_TIMEOUT_US) / 1000 >= DUMMY_RENDER_TIMEOUT_MS)
+                        {
+                            if(buffers.size() > 0)
+                            {
+                                sfdroid_event event;
+                                event.type = NO_BUFFER;
+                                event.data.buffer.buffer = current_buffer;
+                                event.data.buffer.info = &current_info;
+                                sfdroid_events_mutex.lock();
+                                sfdroid_events.push_back(event);
+                                sfdroid_events_mutex.unlock();
+
+                                unique_lock<mutex> lock(notify_mutex);
+
+                                buffer_cond.wait(lock);
+                            }
+
+                            timeout_count = 0;
+                        }
+                        else timeout_count++;
+
+                        if(my_have_focus)
+                        {
 #if DEBUG
-                        cout << "wakeing up android" << endl;
+                            cout << "wakeing up android" << endl;
 #endif
-                        wakeup_android();
+                            wakeup_android();
+                        }
                     }
                 }
             }
@@ -381,16 +483,18 @@ void sfconnection_t::thread_loop()
 
         std::this_thread::yield();
     }
+    thread_exited = true;
 }
 
 void sfconnection_t::notify_buffer_done(int failed)
 {
     current_status = failed;
-    buffer_done = true;
+    buffer_cond.notify_one();
 }
 
 void sfconnection_t::start_thread()
 {
+    thread_exited = false;
     my_thread = std::thread(&sfconnection_t::thread_loop, this);
 }
 
@@ -399,7 +503,19 @@ void sfconnection_t::stop_thread()
     running = false;
     if(fd_client >= 0) shutdown(fd_client, SHUT_RDWR);
     if(fd_pass_socket >= 0) shutdown(fd_pass_socket, SHUT_RDWR);
+    // TODO
+    while(!thread_exited)
+    {
+        usleep(100);
+        buffer_cond.notify_one();
+    }
     my_thread.join();
+}
+
+void sfconnection_t::wait_for_event(int timeout)
+{
+    unique_lock<mutex> notify_back_lock(notify_back_mutex);
+    back_cond.wait_for(notify_back_lock, std::chrono::milliseconds(timeout));
 }
 
 bool sfconnection_t::have_client()
@@ -409,12 +525,12 @@ bool sfconnection_t::have_client()
 
 void sfconnection_t::lost_focus()
 {
-    have_focus = false;
+    my_have_focus = false;
 }
 
 void sfconnection_t::gained_focus()
 {
-    have_focus = true;
+    my_have_focus = true;
 }
 
 void sfconnection_t::deinit()

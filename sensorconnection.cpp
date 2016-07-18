@@ -22,7 +22,6 @@
 
 #include <iostream>
 
-#include <SDL.h>
 #include <QCoreApplication>
 
 #include <sys/socket.h>
