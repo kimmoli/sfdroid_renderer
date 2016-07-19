@@ -39,11 +39,11 @@ LDLIBS  += `pkg-config --libs sensord-qt5` `pkg-config --libs Qt5DBus` `pkg-conf
 DEBUG       ?= 0
 VERBOSE     ?= 0
 
-#ifeq ($(DEBUG),1)
-	CFLAGS += -O0 -g3 -ggdb -pg #-DDEBUG=1
-	CXXFLAGS += -O0 -g3 -ggdb -pg# -DDEBUG=1
+ifeq ($(DEBUG),1)
+	CFLAGS += -O0 -g3 -ggdb -pg -DDEBUG=1
+	CXXFLAGS += -O0 -g3 -ggdb -pg -DDEBUG=1
 	LDFLAGS += -pg
-#endif
+endif
 
 ifeq ($(VERBOSE),1)
 	MSG := @true
