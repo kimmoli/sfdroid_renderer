@@ -17,7 +17,7 @@ extern gralloc_module_t *gralloc_module;
 
 class sfconnection_t {
     public:
-        sfconnection_t() : current_status(0), fd_pass_socket(-1), fd_client(-1), running(false), current_buffer(nullptr), timeout_count(0), my_have_focus(true) {}
+        sfconnection_t() : current_status(0), fd_pass_socket(-1), fd_client(-1), running(false), current_buffer(nullptr), timeout_count(0), my_have_focus(true), notified(false) {}
         int init();
         void deinit();
         int wait_for_client();
@@ -57,6 +57,7 @@ class sfconnection_t {
         unsigned int timeout_count;
 
         bool my_have_focus;
+        bool notified;
 
         std::vector<ANativeWindowBuffer*> buffers;
         std::vector<buffer_info_t> buffer_infos;

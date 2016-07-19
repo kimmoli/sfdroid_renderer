@@ -439,7 +439,8 @@ void sfconnection_t::thread_loop()
 
                         unique_lock<mutex> lock(notify_mutex);
 
-                        buffer_cond.wait(lock);
+                        if(!notified) buffer_cond.wait(lock);
+                        notified = false;
 
                         // let sharebuffer know were done
                         send_status_and_cleanup();
@@ -462,7 +463,8 @@ void sfconnection_t::thread_loop()
 
                                 unique_lock<mutex> lock(notify_mutex);
 
-                                buffer_cond.wait(lock);
+                                if(!notified) buffer_cond.wait(lock);
+                                notified = false;
                             }
 
                             timeout_count = 0;
@@ -488,7 +490,9 @@ void sfconnection_t::thread_loop()
 
 void sfconnection_t::notify_buffer_done(int failed)
 {
+    unique_lock<mutex> lock(notify_mutex);
     current_status = failed;
+    notified = true;
     buffer_cond.notify_one();
 }
 
