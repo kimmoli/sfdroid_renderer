@@ -174,13 +174,16 @@ int renderer_t::init(windowmanager_t &wm)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+#if DEBUG
     // this might even crash if the patch is missing:
+    cout << "WARNING: if i crash now the patch is missing, look at " << __FILE__ << "@" << __LINE__ << endl;
     if(glGetString(GL_VERSION) == 0)
     {
         cout << "oh no, gles v1 not working, do you have this patch: https://github.com/mer-hybris/android_frameworks_native/pull/3/files ?" << endl;
         err = 3843;
         goto quit;
     }
+#endif
 
 quit:
     return err;
