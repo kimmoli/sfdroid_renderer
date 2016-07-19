@@ -295,6 +295,8 @@ void windowmanager_t::touch_handle_down(void *data, struct wl_touch *wl_touch, u
     windowmanager->uinput.send_event(EV_ABS, ABS_MT_SLOT, slot);
     windowmanager->uinput.send_event(EV_ABS, ABS_MT_TRACKING_ID, id);
 
+    x = touch_x;
+
     if(touch_x <= windowmanager->swipe_hack_dist_x)
     {
 #if DEBUG
@@ -302,7 +304,6 @@ void windowmanager_t::touch_handle_down(void *data, struct wl_touch *wl_touch, u
 #endif
         x = 0;
     }
-    else x = touch_x;
     if(touch_x >= wayland_helper::width - windowmanager->swipe_hack_dist_x)
     {
 #if DEBUG
@@ -310,6 +311,9 @@ void windowmanager_t::touch_handle_down(void *data, struct wl_touch *wl_touch, u
 #endif
         x = wayland_helper::width;
     }
+
+    y = touch_y;
+
     if(touch_y <= windowmanager->swipe_hack_dist_y)
     {
 #if DEBUG
@@ -317,7 +321,6 @@ void windowmanager_t::touch_handle_down(void *data, struct wl_touch *wl_touch, u
 #endif
         y = 0;
     }
-    else y = touch_y;
     if(touch_y >= wayland_helper::height - windowmanager->swipe_hack_dist_y)
     {
 #if DEBUG
