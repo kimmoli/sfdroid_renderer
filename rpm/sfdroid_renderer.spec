@@ -31,4 +31,4 @@ make DESTDIR=%{buildroot}%{_sbindir} install
 
 %files
 %defattr(-,root,root,-)
-%{_sbindir}/%{name}
+%{_sbindir}/sfdroid
