@@ -61,7 +61,7 @@ release: $(OUT)
 
 clean:
 	$(MSG) -e "\tCLEAN\t"
-	$(CMD)$(RM) $(OBJ) $(DEP) $(OUT)
+	$(CMD)$(RM) $(OBJ) $(DEP) $(GEN_HDR) $(GEN_SRC) $(OUT)
 
 $(OUT): $(OBJ) $(GEN_HDR)
 	$(MSG) -e "\tLINK\t$@"
@@ -79,7 +79,7 @@ $(OUT): $(OBJ) $(GEN_HDR)
 	$(MSG) -e "\tCC\t$@"
 	$(CMD)$(CC) $(CFLAGS) -c $< -o $@
 
-%.d: %.c
+%.d: %.c $(GEN_HDR)
 	$(MSG) -e "\tDEP\t$@"
 	$(CMD)$(CC) $(CFLAGS) -MF $@ -MM $<
 
@@ -87,7 +87,7 @@ $(OUT): $(OBJ) $(GEN_HDR)
 	$(MSG) -e "\tCXX\t$@"
 	$(CMD)$(CXX) $(CXXFLAGS) -c $< -o $@
 
-%.d: %.cpp
+%.d: %.cpp $(GEN_HDR)
 	$(MSG) -e "\tDEP\t$@"
 	$(CMD)$(CXX) $(CXXFLAGS) -MF $@ -MM $<
 
