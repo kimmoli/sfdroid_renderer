@@ -27,6 +27,7 @@ make
 
 %install
 rm -rf %{buildroot}
+make install
 
 %files
 %defattr(-,root,root,-)
