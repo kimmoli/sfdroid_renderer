@@ -53,7 +53,7 @@ else
 	CMD := @
 endif
 
-.PHONY: release clean
+.PHONY: release clean install
 
 release: CFLAGS += -O3
 release: CXXFLAGS += -O3
@@ -90,6 +90,10 @@ $(OUT): $(OBJ) $(GEN_HDR)
 %.d: %.cpp $(GEN_HDR)
 	$(MSG) -e "\tDEP\t$@"
 	$(CMD)$(CXX) $(CXXFLAGS) -MF $@ -MM $<
+
+install: $(OUT)
+	install -d $(DESTDIR)
+	install -m 0755 $(OUT) $(DESTDIR)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
