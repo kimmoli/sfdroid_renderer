@@ -92,7 +92,8 @@ $(OUT): $(OBJ) $(GEN_HDR)
 	$(CMD)$(CXX) $(CXXFLAGS) -MF $@ -MM $<
 
 install: $(OUT)
-	install -m 0755 $(OUT) /usr/sbin/
+	install -d $(DESTDIR)
+	install -m 0755 $(OUT) $(DESTDIR)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)

@@ -27,8 +27,7 @@ BuildRequires:  droid-hal-devel
 make
 
 %install
-rm -rf %{buildroot}
-make install
+make DESTDIR=%{buildroot}%{_sbindir} install
 
 %files
 %defattr(-,root,root,-)
