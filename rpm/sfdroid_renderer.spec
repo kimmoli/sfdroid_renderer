@@ -14,7 +14,8 @@ BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(sensord-qt5)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Network)
-
+BuildRequires:  pkgconfig(libhardware)
+BuildRequires:  droid-hal-devel
 
 %description
 %{Summary}
