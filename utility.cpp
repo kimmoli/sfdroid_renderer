@@ -20,6 +20,7 @@
 
 #include "utility.h"
 #include "sfdroid_defs.h"
+#include <android-version.h>
 
 #include <fstream>
 #include <string>
@@ -114,7 +115,11 @@ void touch(const char *fname)
 
 void wakeup_android()
 {
+#if ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR == 4
     system("/usr/bin/sfdroid_powerup &");
+#else
+    system("/usr/bin/sfdroid_powerup_cm12.1 &");
+#endif
 }
 
 void to_front(const char *app)
