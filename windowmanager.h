@@ -77,6 +77,7 @@ class windowmanager_t {
 
         renderer_t *taken_focus;
         bool wait_for_next_layer_name;
+        std::string last_layer;
 };
 
 #endif

@@ -149,14 +149,21 @@ void windowmanager_t::handle_layer_name_event(char *layer_name)
         // seems like a new app is starting... lets hope...
         // if a window that is toplevel here it will gain focus again @ gain focus again
         take_focus();
-        return;
+        if(last_layer.find("Android is starting") == std::string::npos) return;
     }
+
+    last_layer = layer_name;
 
     wait_for_next_layer_name = false;
 
     string app = get_app_name(layer_name);
 
     map<string, renderer_t*>::iterator wit = windows.find(app);
+
+    if(wit == windows.end() && last_layer.find("Android is starting") != std::string::npos)
+    {
+        app = "com.android.systemui";
+    }
 
     if(wit != windows.end())
     {
