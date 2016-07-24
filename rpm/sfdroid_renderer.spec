@@ -18,7 +18,7 @@ BuildRequires:  pkgconfig(libhardware)
 BuildRequires:  droid-hal-devel
 
 %description
-%{Summary}
+%{summary}
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -27,8 +27,9 @@ BuildRequires:  droid-hal-devel
 make
 
 %install
-make DESTDIR=%{buildroot}%{_sbindir} install
+make DESTDIR=%{buildroot}%{_bindir} POWERUP=%{powerup} install
 
 %files
 %defattr(-,root,root,-)
-%{_sbindir}/sfdroid
+%{_bindir}/sfdroid
+%{_bindir}/%{powerup}

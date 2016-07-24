@@ -39,6 +39,8 @@ LDLIBS  += `pkg-config --libs sensord-qt5` `pkg-config --libs Qt5DBus` `pkg-conf
 DEBUG       ?= 0
 VERBOSE     ?= 0
 
+POWERUP     ?= sfdroid_powerup
+
 ifeq ($(DEBUG),1)
 	CFLAGS += -O0 -g3 -ggdb -pg -DDEBUG=1
 	CXXFLAGS += -O0 -g3 -ggdb -pg -DDEBUG=1
@@ -94,6 +96,7 @@ $(OUT): $(OBJ) $(GEN_HDR)
 install: $(OUT)
 	install -d $(DESTDIR)
 	install -m 0755 $(OUT) $(DESTDIR)
+	install -m 0755 $(POWERUP) $(DESTDIR)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
