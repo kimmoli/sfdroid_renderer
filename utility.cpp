@@ -46,10 +46,12 @@ bool is_blacklisted(string app)
         return true;
     }
 
+#if 0
     if(app.find("com.android.phone") != std::string::npos)
     {
         return true;
     }
+#endif
 
     return false;
 }
