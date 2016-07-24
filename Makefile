@@ -39,8 +39,6 @@ LDLIBS  += `pkg-config --libs sensord-qt5` `pkg-config --libs Qt5DBus` `pkg-conf
 DEBUG       ?= 0
 VERBOSE     ?= 0
 
-POWERUP     ?= sfdroid_powerup
-
 ifeq ($(DEBUG),1)
 	CFLAGS += -O0 -g3 -ggdb -pg -DDEBUG=1
 	CXXFLAGS += -O0 -g3 -ggdb -pg -DDEBUG=1
@@ -96,7 +94,8 @@ $(OUT): $(OBJ) $(GEN_HDR)
 install: $(OUT)
 	install -d $(DESTDIR)/usr/bin/
 	install -m 0755 $(OUT) $(DESTDIR)/usr/bin/
-	install -m 0755 sparse/$(POWERUP) $(DESTDIR)/usr/bin/sfdroid_powerup
+	install -m 0755 sparse/sfdroid_powerup $(DESTDIR)/usr/bin/
+	install -m 0755 sparse/sfdroid_powerup_cm12.1 $(DESTDIR)/usr/bin/
 	install -m 0755 sparse/am $(DESTDIR)/usr/bin/
 	install -m 0755 sparse/sfdroid.sh $(DESTDIR)/usr/bin/
 	install -d $(DESTDIR)/etc/dbus-1/system.d/

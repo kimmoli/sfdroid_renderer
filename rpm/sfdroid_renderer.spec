@@ -28,7 +28,7 @@ BuildRequires:  desktop-file-utils
 make
 
 %install
-make DESTDIR=%{buildroot} POWERUP=%{powerup} install
+make DESTDIR=%{buildroot} install
 
 desktop-file-install --delete-original \
   --dir %{buildroot}%{_datadir}/applications \
@@ -37,7 +37,7 @@ desktop-file-install --delete-original \
 %files
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/sfdroid
-%attr(755,root,root) %{_bindir}/sfdroid_powerup
+%attr(755,root,root) %{_bindir}/sfdroid_powerup*
 %attr(755,root,root) %{_bindir}/am
 %attr(755,root,root) %{_bindir}/sfdroid.sh
 %config %{_sysconfdir}/dbus-1/system.d/sfdroid.conf
