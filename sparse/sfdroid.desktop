@@ -1,0 +1,6 @@
+[Desktop Entry]
+Exec=invoker --type=generic -s /usr/bin/sfdroid.sh
+Icon=/usr/share/icons/hicolor/96x96/apps/sfdroid.png
+Name=sfdroid
+Type=Application
+Version=1.0

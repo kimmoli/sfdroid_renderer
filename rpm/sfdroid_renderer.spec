@@ -16,6 +16,7 @@ BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Network)
 BuildRequires:  pkgconfig(libhardware)
 BuildRequires:  droid-hal-devel
+BuildRequires:  desktop-file-utils
 
 %description
 %{summary}
@@ -27,9 +28,19 @@ BuildRequires:  droid-hal-devel
 make
 
 %install
-make DESTDIR=%{buildroot}%{_bindir} POWERUP=%{powerup} install
+make DESTDIR=%{buildroot} POWERUP=%{powerup} install
+
+desktop-file-install --delete-original \
+  --dir %{buildroot}%{_datadir}/applications \
+   %{buildroot}%{_datadir}/applications/*.desktop
 
 %files
-%defattr(-,root,root,-)
-%{_bindir}/sfdroid
-%{_bindir}/%{powerup}
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_bindir}/sfdroid
+%attr(755,root,root) %{_bindir}/sfdroid_powerup
+%attr(755,root,root) %{_bindir}/am
+%attr(755,root,root) %{_bindir}/sfdroid.sh
+%config %{_sysconfdir}/dbus-1/system.d/sfdroid.conf
+%config %{_sysconfdir}/udev/rules.d/99-sfdroid-uinput.rules
+%{_datadir}/applications/*.desktop
+%{_datadir}/icons/hicolor/96x96/apps/sfdroid.png

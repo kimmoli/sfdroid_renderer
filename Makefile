@@ -94,9 +94,19 @@ $(OUT): $(OBJ) $(GEN_HDR)
 	$(CMD)$(CXX) $(CXXFLAGS) -MF $@ -MM $<
 
 install: $(OUT)
-	install -d $(DESTDIR)
-	install -m 0755 $(OUT) $(DESTDIR)
-	install -m 0755 $(POWERUP) $(DESTDIR)
+	install -d $(DESTDIR)/usr/bin/
+	install -m 0755 $(OUT) $(DESTDIR)/usr/bin/
+	install -m 0755 sparse/$(POWERUP) $(DESTDIR)/usr/bin/sfdroid_powerup
+	install -m 0755 sparse/am $(DESTDIR)/usr/bin/
+	install -m 0755 sparse/sfdroid.sh $(DESTDIR)/usr/bin/
+	install -d $(DESTDIR)/etc/dbus-1/system.d/
+	install -m 0644 sparse/sfdroid.conf $(DESTDIR)/etc/dbus-1/system.d/
+	install -d $(DESTDIR)/etc/udev/rules.d/
+	install -m 0644 sparse/99-sfdroid-uinput.rules $(DESTDIR)/etc/udev/rules.d/
+	install -d $(DESTDIR)/usr/share/applications/
+	install -m 0644 sparse/*.desktop $(DESTDIR)/usr/share/applications/
+	install -d $(DESTDIR)/usr/share/icons/hicolor/96x96/apps/
+	install -m 0644 sparse/sfdroid.png $(DESTDIR)/usr/share/icons/hicolor/96x96/apps/
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
