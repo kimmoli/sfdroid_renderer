@@ -341,13 +341,7 @@ void renderer_t::lost_focus()
 #if DEBUG
     cout << "losing focus: " << app << endl;
 #endif
-    // TODO: check if still necessary
-    if(!is_active())
-    {
-        cout << "not active" << endl;
-        return;
-    }
-    else if(save_screen() == 0)
+    if(save_screen() == 0)
     {
         dummy_draw(buffer->stride, buffer->height, buffer->format);
     }

@@ -109,7 +109,11 @@ void windowmanager_t::take_focus()
 {
     for(map<string, renderer_t*>::iterator wit = windows.begin();wit != windows.end();wit++)
     {
-        if(wit->second->is_active()) wit->second->lost_focus();
+        if(wit->second->is_active())
+        {
+            wit->second->lost_focus();
+            taken_focus = wit->second;
+        }
     }
 }
 
@@ -143,9 +147,12 @@ void windowmanager_t::handle_layer_name_event(char *layer_name)
     if(is_blacklisted(layer_name))
     {
         // seems like a new app is starting... lets hope...
+        // if a window that is toplevel here it will gain focus again @ gain focus again
         take_focus();
         return;
     }
+
+    wait_for_next_layer_name = false;
 
     string app = get_app_name(layer_name);
 
@@ -157,7 +164,17 @@ void windowmanager_t::handle_layer_name_event(char *layer_name)
         {
             take_focus();
             // close it to bring it to the front...
-            wit->second->recreate();
+            if(taken_focus != wit->second)
+            {
+                wit->second->recreate();
+                taken_focus = nullptr;
+            }
+            else
+            {
+                // gain focus again
+                wit->second->gained_focus();
+                taken_focus = nullptr;
+            }
         }
     }
     else
@@ -167,6 +184,7 @@ void windowmanager_t::handle_layer_name_event(char *layer_name)
         windows[app]->init(*this);
         windows[app]->set_package(app);
         windows[app]->gained_focus();
+        taken_focus = nullptr;
     }
 }
 
@@ -219,7 +237,7 @@ bool windowmanager_t::handle_buffer_event(ANativeWindowBuffer *buffer, buffer_in
 
     for(map<string, renderer_t*>::iterator wit = windows.begin();wit != windows.end();wit++)
     {
-        if(wit->second->is_active())
+        if(wit->second->is_active() && !wait_for_next_layer_name)
         {
             if(wit->second->render_buffer(buffer, info) != 0)
             {
@@ -412,7 +430,9 @@ void windowmanager_t::keyboard_handle_enter(void *data, struct wl_keyboard *wl_k
                 windowmanager->take_focus();
                 wakeup_android();
                 to_front(wit->second->get_package().c_str());
+                windowmanager->wait_for_next_layer_name = true;
                 wit->second->gained_focus();
+                windowmanager->taken_focus = nullptr;
             }
             break;
         }

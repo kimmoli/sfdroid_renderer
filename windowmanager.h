@@ -16,7 +16,7 @@
 
 class windowmanager_t {
     public:
-        windowmanager_t() : sfconnection(nullptr), w_touch(nullptr), w_keyboard(nullptr), swipe_hack_dist_x(0), swipe_hack_dist_y(0) {}
+        windowmanager_t() : sfconnection(nullptr), w_touch(nullptr), w_keyboard(nullptr), swipe_hack_dist_x(0), swipe_hack_dist_y(0), taken_focus(nullptr), wait_for_next_layer_name(false) {}
         int init(sfconnection_t &sfconnection);
         void deinit();
 
@@ -74,6 +74,9 @@ class windowmanager_t {
             keyboard_handle_modifiers,
             keyboard_handle_repeat_info,
         };
+
+        renderer_t *taken_focus;
+        bool wait_for_next_layer_name;
 };
 
 #endif

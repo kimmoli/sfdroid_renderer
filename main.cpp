@@ -163,12 +163,13 @@ int main(int argc, char *argv[])
                         {
                             if(!windowmanager.handle_buffer_event(sfdroid_events[i].data.buffer.buffer, *sfdroid_events[i].data.buffer.info))
                             {
-                                sfconnection.notify_buffer_done(1);
+                                sfconnection.notify_buffer_done(0);
                                 failed_frames++;
                                 break;
                             }
+                            frames++;
                         }
-                        frames++;
+                        else failed_frames++;
                         sfconnection.notify_buffer_done(0);
                         break;
                     case NO_BUFFER:
@@ -177,11 +178,15 @@ int main(int argc, char *argv[])
                             if(!windowmanager.handle_no_buffer_event(sfdroid_events[i].data.buffer.buffer, *sfdroid_events[i].data.buffer.info))
                             {
                                 failed_dummy_frames++;
-                                sfconnection.notify_buffer_done(1);
+                                sfconnection.notify_buffer_done(0);
                                 break;
                             }
+                            dummy_frames++;
                         }
-                        dummy_frames++;
+                        else
+                        {
+                            failed_dummy_frames++;
+                        }
                         sfconnection.notify_buffer_done(0);
                         break;
                 }
