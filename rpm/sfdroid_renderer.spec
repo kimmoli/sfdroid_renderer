@@ -34,6 +34,9 @@ desktop-file-install --delete-original \
   --dir %{buildroot}%{_datadir}/applications \
    %{buildroot}%{_datadir}/applications/*.desktop
 
+%pre
+usermod -G net_bt_stack -a nemo
+
 %files
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/sfdroid
