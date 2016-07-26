@@ -7,5 +7,10 @@ if [ "$(cat /init.rc | grep BOOTCLASSPATH)" = "" ]; then
 fi
 `cat $INITFILE | grep BOOTCLASSPATH | sed 's/BOOTCLASSPATH /BOOTCLASSPATH=/g'`
 
-PATH=/system/bin:$PATH LD_LIBRARY_PATH=/system/lib:/vendor/lib /system/bin/am $@
+base=/usr/libexec/sfdroid/system
+export CLASSPATH=$base/framework/am.jar
+
+export PATH=/system/bin:$PATH LD_LIBRARY_PATH=/system/lib:/vendor/lib
+
+exec app_process $base/bin com.android.commands.am.Am "$@"
 
