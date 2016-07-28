@@ -67,6 +67,8 @@ int main(int argc, char *argv[])
     windowmanager_t windowmanager;
     sensorconnection_t sensorconnection;
 
+    setlocale(LC_ALL, "C");
+
     struct timeval current_time, old_time;
     int frames = 0, failed_frames = 0, dummy_frames = 0, failed_dummy_frames = 0;
 
